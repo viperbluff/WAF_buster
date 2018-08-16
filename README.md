@@ -1,4 +1,4 @@
-# WAF_BUSTER
+# WAF_buster
 Disrupt WAF by abusing SSL/TLS Ciphers
 
 # About WAF_buster
@@ -7,7 +7,8 @@ It works by first triggering SslScan to look for all the supported ciphers durin
 
 ## Screenshots 
 
-![WAF_buster]
+![WAF_buster]](https://raw.github.com/viperbluff/WAF_buster/master/screenshots/Screenshot from 2018-08-16 06-56-36.png)
+
 
 ## Installation 
 
@@ -18,18 +19,25 @@ It works by first triggering SslScan to look for all the supported ciphers durin
 This tool has been created using Python2 and below modules have been used throughout:-
 
 1.requests
+
 2.os
+
 3.sys
+
 4.subprocess
 
 ## Usage 
 
 > **Open terminal** 
-> **python2 WAF_buster.py**
+
+> **python2 WAF_buster.py --input**
+
+![Usage](https://raw.github.com/viperbluff/WAF_buster/master/screenshots/Screenshot from 2018-08-16 06-56-21.png)
 
 ## Credits
 
 Sahil Tikoo
+
 Hacker
 
 
